@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Complete - Results</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container results-container">
+        <header>
+            <h1>🎉 Interview Complete!</h1>
+            <p>Generating your comprehensive performance report...</p>
+        </header>
+
+        <div id="loading" class="loading-section">
+            <div class="spinner"></div>
+            <p>Analyzing your responses and calculating scores...</p>
+            <p class="loading-details">This will take 10-15 seconds</p>
+        </div>
+
+        <div id="results" class="results-section" style="display: none;">
+            <div class="score-summary">
+                <div class="overall-score">
+                    <h2>Overall Score</h2>
+                    <div class="score-circle" id="overallScore">0</div>
+                    <p class="score-label" id="scoreLabel">Calculating...</p>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h3>Content Quality</h3>
+                        <div class="metric-score" id="contentScore">0</div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="contentFill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>Communication</h3>
+                        <div class="metric-score" id="clarityScore">0</div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="clarityFill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>Confidence</h3>
+                        <div class="metric-score" id="confidenceScore">0</div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="confidenceFill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <h3>Professionalism</h3>
+                        <div class="metric-score" id="professionalScore">0</div>
+                        <div class="metric-bar">
+                            <div class="metric-fill" id="professionalFill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions-section">
+                <a href="#" id="downloadReport" class="btn-download" style="display: none;">
+                    📄 Download Detailed PDF Report
+                </a>
+                <a href="/" class="btn-secondary">
+                    🔄 Practice Again
+                </a>
+            </div>
+
+            <div class="summary-section">
+                <h3>Quick Summary</h3>
+                <div class="summary-text" id="summaryText">
+                    <!-- Summary will be generated here -->
+                </div>
+            </div>
+        </div>
+
+        <div id="error" class="error-message" style="display: none;"></div>
+    </div>
+
+    <script>
+        const sessionId = '{{ session_id }}';
+
+        // Generate report on page load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`/api/generate-report/${sessionId}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Hide loading
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('results').style.display = 'block';
+
+                    // Display scores
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'Failed to generate report');
+                }
+            } catch (error) {
+                console.error('Error generating report:', error);
+                showError('Error generating report: ' + error.message);
+            }
+        });
+
+        function displayResults(data) {
+            const overallScore = data.overall_score.toFixed(1);
+            const metrics = data.metrics;
+
+            // Overall score
+            document.getElementById('overallScore').textContent = overallScore;
+            
+            // Score label
+            let label = '';
+            let color = '';
+            if (overallScore >= 85) {
+                label = 'Excellent! 🌟';
+                color = '#27ae60';
+            } else if (overallScore >= 70) {
+                label = 'Good! 👍';
+                color = '#3498db';
+            } else if (overallScore >= 50) {
+                label = 'Average ⚠️';
+                color = '#f39c12';
+            } else {
+                label = 'Needs Improvement 📈';
+                color = '#e74c3c';
+            }
+            document.getElementById('scoreLabel').textContent = label;
+            document.getElementById('overallScore').style.color = color;
+
+            // Individual metrics
+            setMetric('content', metrics.content_score);
+            setMetric('clarity', metrics.clarity_score);
+            setMetric('confidence', metrics.confidence_score);
+            setMetric('professional', metrics.professionalism_score);
+
+            // Enable download
+            const downloadBtn = document.getElementById('downloadReport');
+            downloadBtn.href = data.report_url;
+            downloadBtn.style.display = 'inline-block';
+
+            // Generate summary
+            generateSummary(overallScore, metrics);
+        }
+
+        function setMetric(name, score) {
+            const scoreElement = document.getElementById(`${name}Score`);
+            const fillElement = document.getElementById(`${name}Fill`);
+            
+            scoreElement.textContent = score.toFixed(1);
+            fillElement.style.width = score + '%';
+            
+            // Color based on score
+            if (score >= 75) {
+                fillElement.style.backgroundColor = '#27ae60';
+            } else if (score >= 60) {
+                fillElement.style.backgroundColor = '#3498db';
+            } else if (score >= 45) {
+                fillElement.style.backgroundColor = '#f39c12';
+            } else {
+                fillElement.style.backgroundColor = '#e74c3c';
+            }
+        }
+
+        function generateSummary(overallScore, metrics) {
+            let summary = '<ul class="summary-list">';
+            
+            if (overallScore >= 70) {
+                summary += '<li>✅ Great overall performance! You showed strong interviewing skills.</li>';
+            } else {
+                summary += '<li>📈 There\'s room for improvement. Focus on the areas highlighted below.</li>';
+            }
+
+            // Content
+            if (metrics.content_score >= 75) {
+                summary += '<li>✅ Excellent content quality - you provided specific examples and details.</li>';
+            } else if (metrics.content_score < 60) {
+                summary += '<li>⚠️ Focus on providing more specific examples and quantifiable achievements in your answers.</li>';
+            }
+
+            // Clarity
+            if (metrics.clarity_score >= 75) {
+                summary += '<li>✅ Clear and articulate communication throughout the interview.</li>';
+            } else if (metrics.clarity_score < 60) {
+                summary += '<li>⚠️ Work on reducing filler words and organizing your thoughts more clearly.</li>';
+            }
+
+            // Confidence
+            if (metrics.confidence_score >= 75) {
+                summary += '<li>✅ You demonstrated good confidence and positive energy.</li>';
+            } else if (metrics.confidence_score < 60) {
+                summary += '<li>⚠️ Practice speaking with more confidence and conviction in your answers.</li>';
+            }
+
+            summary += '<li>📄 Download the detailed PDF report below for in-depth analysis and specific recommendations.</li>';
+            summary += '</ul>';
+
+            document.getElementById('summaryText').innerHTML = summary;
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

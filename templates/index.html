@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mock Interview System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 AI-Powered Mock Interview System</h1>
+            <p>Upload your resume and job description to get started</p>
+        </header>
+
+        <div class="upload-section">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="resume">📄 Upload Your Resume</label>
+                    <input type="file" id="resume" name="resume" accept=".pdf,.docx,.txt" required>
+                    <small>Accepted formats: PDF, DOCX, TXT</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="job_description">📋 Upload Job Description</label>
+                    <input type="file" id="job_description" name="job_description" accept=".pdf,.docx,.txt" required>
+                    <small>Accepted formats: PDF, DOCX, TXT</small>
+                </div>
+
+                <button type="submit" class="btn-primary" id="startBtn">
+                    Start Interview
+                </button>
+            </form>
+
+            <div id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Processing your documents and generating personalized questions...</p>
+                <p class="loading-details">This may take 10-20 seconds</p>
+            </div>
+
+            <div id="error" class="error-message" style="display: none;"></div>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <h3>🎤 Real-time Analysis</h3>
+                <p>Record your answers with mic controls</p>
+            </div>
+            <div class="feature">
+                <h3>📹 Video Interview</h3>
+                <p>Practice with your webcam like a real interview</p>
+            </div>
+            <div class="feature">
+                <h3>📊 Detailed Report</h3>
+                <p>Get comprehensive feedback on your performance</p>
+            </div>
+            <div class="feature">
+                <h3>🎯 Personalized Questions</h3>
+                <p>5 Behavioral + 5 Technical + 10 Resume-based questions</p>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>📝 What to Expect:</h3>
+            <ul>
+                <li><strong>20 Questions Total:</strong>
+                    <ul>
+                        <li>5 Behavioral questions (teamwork, challenges, etc.)</li>
+                        <li>5 Technical questions (based on job requirements)</li>
+                        <li>10 Resume-specific questions (about YOUR projects & experience)</li>
+                    </ul>
+                </li>
+                <li><strong>Recording Control:</strong> Start/stop recording for each answer</li>
+                <li><strong>Video Display:</strong> See yourself like in Zoom</li>
+                <li><strong>Real-time Feedback:</strong> Score after each question</li>
+                <li><strong>Final Report:</strong> Downloadable PDF with detailed analysis</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const resume = document.getElementById('resume').files[0];
+            const jd = document.getElementById('job_description').files[0];
+            
+            if (!resume || !jd) {
+                showError('Please upload both files');
+                return;
+            }
+            
+            formData.append('resume', resume);
+            formData.append('job_description', jd);
+            
+            // Show loading
+            document.getElementById('uploadForm').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Redirect to interview page
+                    window.location.href = `/interview/${data.session_id}`;
+                } else {
+                    showError(data.error || 'Upload failed');
+                    resetForm();
+                }
+            } catch (error) {
+                showError('Error: ' + error.message);
+                resetForm();
+            }
+        });
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function resetForm() {
+            document.getElementById('uploadForm').style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        // File input labels
+        document.getElementById('resume').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name;
+            if (fileName) {
+                this.nextElementSibling.textContent = `Selected: ${fileName}`;
+            }
+        });
+        
+        document.getElementById('job_description').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name;
+            if (fileName) {
+                this.nextElementSibling.textContent = `Selected: ${fileName}`;
+            }
+        });
+    </script>
+</body>
+</html>
